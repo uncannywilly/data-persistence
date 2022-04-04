@@ -36,9 +36,6 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
-        if(StartGame.Instance!=null){
-            StartGame.Instance.LoadName();
-        }
     }
 
     private void Update()
