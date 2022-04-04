@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,6 +12,7 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text HighScore;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -18,7 +20,15 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
-    
+    public int currentHighScore;
+    public string path; 
+
+
+    void Awake()
+    {
+       path = Application.persistentDataPath + "/savefile.json";
+       LoadHighScore();
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -36,12 +46,16 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+       
+        
+        
     }
 
     private void Update()
     {
         if (!m_Started)
         {
+         
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 m_Started = true;
@@ -51,26 +65,92 @@ public class MainManager : MonoBehaviour
 
                 Ball.transform.SetParent(null);
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
+               
             }
         }
         else if (m_GameOver)
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                
             }
         }
     }
 
     void AddPoint(int point)
     {
+        
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
+       
+      
     }
 
     public void GameOver()
     {
+        
         m_GameOver = true;
         GameOverText.SetActive(true);
+        
+        if (m_Points > currentHighScore)
+        {
+            SaveNewHighScore(m_Points);
+        }
     }
+    
+    [System.Serializable]
+    class SaveData
+    {
+        public string playername;
+        public int score; 
+    }
+
+    public void SaveNewHighScore(int newHighScore)
+    {
+        
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            data.score = newHighScore;
+            data.playername = DataManager.Instance.playerName;
+            json = JsonUtility.ToJson(data);
+            File.WriteAllText(path, json);
+            HighScore.text = "HighScore: " + data.score + "by: " +data.playername;
+        }
+        else
+        {
+            Debug.Log("File not found");
+            
+        }
+
+    }
+
+    public void LoadHighScore()
+    { 
+        
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            currentHighScore = data.score;
+            HighScore.text = "HighScore: " + currentHighScore + "by: " +data.playername;
+           
+
+        }
+
+        else
+        {
+            Debug.Log("File not found");
+            
+        }
+        
+    }
+ 
+
+
+
+   
 }
